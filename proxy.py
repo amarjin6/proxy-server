@@ -4,9 +4,9 @@ import sys
 import threading
 
 config = {
-    'HOST': 'localhost',
+    'HOST': '0.0.0.0',
     'PORT': 8000,
-    'MAX_LEN': 1024,
+    'MAX_LEN': 16384,
     'TIMEOUT': 5,
     'MEMBERS_AMOUNT': 10
 }
@@ -31,7 +31,7 @@ class Proxy:
             # Establish the connection
             (conn, addr) = self.sock.accept()
             t = threading.Thread(name=addr[0], target=self.redirect,
-                                 args=(self, conn, addr), daemon=True)
+                                 args=(conn, addr), daemon=True)
             t.start()
 
     @staticmethod
@@ -71,12 +71,16 @@ class Proxy:
             port = int((temp[(portPos + 1):])[:webserverPos - portPos - 1])
             webserver = temp[:portPos]
 
+        print(webserver)
+        # Get IP by hostname
+        webserver = socket.gethostbyname(webserver)
+
         # Set up a new connection to the destination server
         try:
             # Create a socket to connect to the web server
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(config['TIMEOUT'])
-            s.bind((webserver, port))
+            s.bind(('', port))
             s.connect((webserver, port))
             s.sendall(request)
 
@@ -94,7 +98,7 @@ class Proxy:
                 conn.close()
 
         except socket.error as e:
-            print(f'Failed to set up new connection: {addr} , {e}')
+            print(f'Failed to set up new connection: {e}')
             if s:
                 s.close()
             elif conn:
