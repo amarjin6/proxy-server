@@ -4,7 +4,7 @@ import sys
 import threading
 
 config = {
-    'HOST': '192.168.56.1',
+    'HOST': 'localhost',
     'PORT': 8000,
     'MAX_LEN': 1024,
     'TIMEOUT': 5,
@@ -13,7 +13,7 @@ config = {
 
 
 class Proxy:
-    def __init__(self, config: dict):
+    def __init__(self):
         # Shutdown on Ctrl+C
         signal.signal(signal.SIGINT, self.shutdown)
 
@@ -22,26 +22,25 @@ class Proxy:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # Bind the socket to a public host, and a port
-        self.sock.bind((config['HOST_NAME'], config['BIND_PORT']))
+        self.sock.bind((config['HOST'], config['PORT']))
 
         self.sock.listen(config['MEMBERS_AMOUNT'])  # become a server socket
-        self.__clients = {}
 
     def listen(self):
         while True:
             # Establish the connection
             (conn, addr) = self.sock.accept()
-            d = threading.Thread(name=addr[0], target=self.redirect,
-                                 args=(conn, addr), daemon=True)
-            d.start()
+            t = threading.Thread(name=addr[0], target=self.redirect,
+                                 args=(self, conn, addr), daemon=True)
+            t.start()
 
     @staticmethod
     def redirect(conn, addr):
         # Get the request from browser
-        request = conn.recv(config['MAX_REQUEST_LEN'])
+        request = conn.recv(config['MAX_LEN'])
 
         # Parse the first line
-        firstLine = request.split('\n')[0]
+        firstLine = request.decode('utf-8').split('\n')[0]
 
         # Get url
         try:
@@ -62,8 +61,6 @@ class Proxy:
         if webserverPos == -1:
             webserverPos = len(temp)
 
-        webserver = ''
-        port = -1
         if portPos == -1 or webserverPos < portPos:
             # default port
             port = 80
@@ -76,9 +73,10 @@ class Proxy:
 
         # Set up a new connection to the destination server
         try:
-            # create a socket to connect to the web server
+            # Create a socket to connect to the web server
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(config['TIMEOUT'])
+            s.bind((webserver, port))
             s.connect((webserver, port))
             s.sendall(request)
 
@@ -87,7 +85,7 @@ class Proxy:
                 # receive data from web server
                 data = s.recv(config['MAX_LEN'])
 
-                if len(data) > 0:
+                if data:
                     conn.send(data)  # send to browser/client
                 else:
                     break
@@ -99,16 +97,15 @@ class Proxy:
             print(f'Failed to set up new connection: {addr} , {e}')
             if s:
                 s.close()
-            if conn:
+            elif conn:
                 conn.close()
 
     def shutdown(self):
-        """ Handle the exiting server. Clean all traces """
         self.sock.close()
         sys.exit(0)
 
 
 if __name__ == "__main__":
     print('Server is running...')
-    server = Proxy(config)
+    server = Proxy()
     server.listen()
