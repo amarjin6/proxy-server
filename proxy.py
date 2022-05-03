@@ -6,7 +6,7 @@ import threading
 config = {
     'HOST': '0.0.0.0',
     'PORT': 8000,
-    'MAX_LEN': 1024,
+    'MAX_LEN': 65535,
     'TIMEOUT': 50,
     'MEMBERS_AMOUNT': 10,
     'BLACKLIST': ['silvertranscendentoldsunset.neverssl.com', 'https']
@@ -80,6 +80,9 @@ class Proxy:
 
         # Get IP by hostname
         webserver = socket.gethostbyname(webserver)
+
+        # Сonvert generic message format of RFC 822
+        request = request.replace(b'http://live.legendy.by:8000/legendyfm', b'/legendyfm')
 
         # Set up a new connection to the destination server
         try:
