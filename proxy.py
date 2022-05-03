@@ -6,9 +6,10 @@ import threading
 config = {
     'HOST': '0.0.0.0',
     'PORT': 8000,
-    'MAX_LEN': 65535,
-    'TIMEOUT': 5,
-    'MEMBERS_AMOUNT': 10
+    'MAX_LEN': 1024,
+    'TIMEOUT': 50,
+    'MEMBERS_AMOUNT': 10,
+    'BLACKLIST': ['silvertranscendentoldsunset.neverssl.com']
 }
 
 
@@ -34,8 +35,7 @@ class Proxy:
                                  args=(conn,), daemon=True)
             t.start()
 
-    @staticmethod
-    def redirect(conn):
+    def redirect(self, conn):
         # Get the request from browser
         request = conn.recv(config['MAX_LEN'])
 
@@ -48,16 +48,22 @@ class Proxy:
         except IndexError:
             url = ''
 
-        httpPos = url.find("://")  # find pos of ://
+        # Check if the host:port is blacklisted
+        for i in range(0, len(config['BLACKLIST'])):
+            if config['BLACKLIST'][i] in url:
+                print('[!] BLOCKED')
+                sys.exit(0)
+
+        httpPos = url.find('://')  # find pos of ://
         if httpPos == -1:
             temp = url
         else:
             temp = url[(httpPos + 3):]  # get the rest of url
 
-        portPos = temp.find(":")  # find the port pos (if any)
+        portPos = temp.find(':')  # find the port pos (if any)
 
         # Find end of web server
-        webserverPos = temp.find("/")
+        webserverPos = temp.find('/')
         if webserverPos == -1:
             webserverPos = len(temp)
 
@@ -93,6 +99,7 @@ class Proxy:
                     conn.send(data)  # send to browser/client
                     answer = data[9:15].decode('utf-8')
                     print(f'{url} - {answer}')
+                    continue
                 else:
                     break
 
@@ -109,7 +116,7 @@ class Proxy:
         sys.exit(0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     print('Server is running...')
     server = Proxy()
     server.listen()
