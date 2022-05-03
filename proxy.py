@@ -9,7 +9,7 @@ config = {
     'MAX_LEN': 1024,
     'TIMEOUT': 50,
     'MEMBERS_AMOUNT': 10,
-    'BLACKLIST': ['silvertranscendentoldsunset.neverssl.com']
+    'BLACKLIST': ['silvertranscendentoldsunset.neverssl.com', 'https']
 }
 
 
@@ -35,7 +35,8 @@ class Proxy:
                                  args=(conn,), daemon=True)
             t.start()
 
-    def redirect(self, conn):
+    @staticmethod
+    def redirect(conn):
         # Get the request from browser
         request = conn.recv(config['MAX_LEN'])
 
@@ -97,12 +98,11 @@ class Proxy:
 
                 if data:
                     conn.send(data)  # send to browser/client
-                    answer = data[9:15].decode('utf-8')
-                    print(f'{url} - {answer}')
-                    continue
+                    if b'HTTP/1.1' in data:
+                        answer = data[9:15].decode('utf-8')
+                        print(f'{url} - {answer}')
                 else:
                     break
-
 
         except socket.error as e:
             print(f'Failed to set up new connection: {e}')
