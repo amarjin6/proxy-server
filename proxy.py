@@ -6,7 +6,7 @@ import threading
 config = {
     'HOST': '0.0.0.0',
     'PORT': 8000,
-    'MAX_LEN': 16384,
+    'MAX_LEN': 65535,
     'TIMEOUT': 5,
     'MEMBERS_AMOUNT': 10
 }
@@ -31,11 +31,11 @@ class Proxy:
             # Establish the connection
             (conn, addr) = self.sock.accept()
             t = threading.Thread(name=addr[0], target=self.redirect,
-                                 args=(conn, addr), daemon=True)
+                                 args=(conn,), daemon=True)
             t.start()
 
     @staticmethod
-    def redirect(conn, addr):
+    def redirect(conn):
         # Get the request from browser
         request = conn.recv(config['MAX_LEN'])
 
@@ -71,7 +71,6 @@ class Proxy:
             port = int((temp[(portPos + 1):])[:webserverPos - portPos - 1])
             webserver = temp[:portPos]
 
-        print(webserver)
         # Get IP by hostname
         webserver = socket.gethostbyname(webserver)
 
@@ -80,22 +79,23 @@ class Proxy:
             # Create a socket to connect to the web server
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(config['TIMEOUT'])
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind(('', port))
             s.connect((webserver, port))
             s.sendall(request)
 
             # Redirect the server’s response to the client
-            while 1:
+            while True:
                 # receive data from web server
                 data = s.recv(config['MAX_LEN'])
 
                 if data:
                     conn.send(data)  # send to browser/client
+                    answer = data[9:15].decode('utf-8')
+                    print(f'{url} - {answer}')
                 else:
                     break
 
-                s.close()
-                conn.close()
 
         except socket.error as e:
             print(f'Failed to set up new connection: {e}')
