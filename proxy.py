@@ -101,7 +101,7 @@ class Proxy:
 
                 if data:
                     conn.send(data)  # send to browser/client
-                    if b'HTTP/1.1' in data:
+                    if b'HTTP/' in data:
                         answer = data[9:15].decode('utf-8')
                         print(f'{url} - {answer}')
                 else:
