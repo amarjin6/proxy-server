@@ -26,8 +26,10 @@ class Proxy:
         # Bind the socket to a public host, and a port
         self.sock.bind((config['HOST'], config['PORT']))
 
-        self.sock.listen(config['MEMBERS_AMOUNT'])  # become a server socket
+        # Become a server socket
+        self.sock.listen(config['MEMBERS_AMOUNT'])
 
+        # Track linked sites to proxy
         self.linkedSites = []
 
     def listen(self):
@@ -84,7 +86,7 @@ class Proxy:
         webserver = socket.gethostbyname(webserver)
 
         # Сonvert generic message format of RFC 822
-        buf1 = re.findall(b'\:\d+\/(.*\s)', request)
+        buf1 = re.findall(b'\:\d+\/(.*)', request)
         tmp1 = b''.join(buf1)
         reg1 = b'/' + tmp1
 
@@ -101,8 +103,6 @@ class Proxy:
         reg2 = b''.join(tmp)
 
         request = request.replace(reg2, reg1)
-        reg2 = b''
-        reg1 = b''
         request = request.replace(b'http://live.legendy.by:8000/legendyfm', b'/legendyfm')
 
         # Set up a new connection to the destination server
