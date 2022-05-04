@@ -28,6 +28,8 @@ class Proxy:
 
         self.sock.listen(config['MEMBERS_AMOUNT'])  # become a server socket
 
+        self.linkedSites = []
+
     def listen(self):
         while True:
             # Establish the connection
@@ -36,8 +38,7 @@ class Proxy:
                                  args=(conn,), daemon=True)
             t.start()
 
-    @staticmethod
-    def redirect(conn):
+    def redirect(self, conn):
         # Get the request from browser
         request = conn.recv(config['MAX_LEN'])
 
@@ -121,7 +122,8 @@ class Proxy:
 
                 if data:
                     conn.send(data)  # send to browser/client
-                    if b'HTTP/' in data:
+                    if b'HTTP/' in data and url not in self.linkedSites:
+                        self.linkedSites.append(url)
                         answer = data[9:15].decode('utf-8')
                         print(f'{url} - {answer}')
                 else:
