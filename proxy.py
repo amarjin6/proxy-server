@@ -2,6 +2,7 @@ import signal  # Module provides mechanisms for using signal handlers
 import socket
 import sys
 import threading
+import re  # RegEx
 
 config = {
     'HOST': '0.0.0.0',
@@ -82,6 +83,25 @@ class Proxy:
         webserver = socket.gethostbyname(webserver)
 
         # Сonvert generic message format of RFC 822
+        buf1 = re.findall(b'\:\d+\/(.*\s)', request)
+        tmp1 = b''.join(buf1)
+        reg1 = b'/' + tmp1
+
+        buf2 = re.findall(b'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?',
+                          request)
+        tmp = []
+        for i in range(len(buf2)):
+            for j in range(len(buf2[i])):
+                tmp.append(buf2[i][j])
+
+        if tmp:
+            tmp[0] += b'://'
+
+        reg2 = b''.join(tmp)
+
+        request = request.replace(reg2, reg1)
+        reg2 = b''
+        reg1 = b''
         request = request.replace(b'http://live.legendy.by:8000/legendyfm', b'/legendyfm')
 
         # Set up a new connection to the destination server
@@ -108,7 +128,6 @@ class Proxy:
                     break
 
         except socket.error as e:
-            print(f'Failed to set up new connection: {e}')
             if s:
                 s.close()
             elif conn:
