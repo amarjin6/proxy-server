@@ -117,6 +117,10 @@ class Proxy:
             reg2 = b''.join(tmp)
             self.reg2 = reg2
 
+            # Check for RFC sites
+            if not self.reg1:
+                self.reg1 = self.reg2
+
         request = request.replace(self.reg2, self.reg1)
 
         # Set up a new connection to the destination server
