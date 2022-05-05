@@ -32,9 +32,9 @@ class Proxy:
         # Track linked sites to proxy
         self.linkedSites = []
 
-        # Store RegEx for  RFC sites
-        self.reg1 = ''
-        self.reg2 = ''
+        # Store RegEx for not RFC sites
+        self.reg1 = b''
+        self.reg2 = b''
 
     def listen(self):
         while True:
@@ -89,20 +89,23 @@ class Proxy:
         # Get IP by hostname
         webserver = socket.gethostbyname(webserver)
 
-        # Сonvert generic message format of RFC 822
+        # Сonvert generic message format to RFC 822
         if not self.reg1 and not self.reg2:
             # Find reg1
-            buf1 = re.findall(b'\:\d+\/(.*)', request)
-            tmp1 = b''.join(buf1)
-            tmp2 = b'/' + tmp1
-            buf1 = re.findall(b'([^ ]+) .*', tmp2)
-            reg1 = b''.join(buf1)
-            print(reg1)
-            self.reg1 = reg1
+            buf1 = re.findall(b'\:\d+\/([^ ]+)(.*\s)', request)
+            tmp = []
+            for i in range(len(buf1)):
+                for j in range(len(buf1[i])):
+                    tmp.append(buf1[i][j])
+
+            if tmp:
+                buf1 = tmp[0]
+                reg1 = b'/' + buf1
+                self.reg1 = reg1
 
             # Find reg2
             buf2 = re.findall(b'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?',
-                          request)
+                              request)
             tmp = []
             for i in range(len(buf2)):
                 for j in range(len(buf2[i])):
@@ -141,6 +144,7 @@ class Proxy:
                     break
 
         except socket.error as e:
+            print(f'Failed to set up new connection: {e}')
             if s:
                 s.close()
             elif conn:
