@@ -1,0 +1,8 @@
+# Optional requirements for proxy-server
+pip>=22.0.4
+setuptools>=62.0.0
+wheel>=0.37.1
+virtualenv>=20.13.3
+socket>=1.0.0
+threading>=4.1.0
+sys>=0.4.0
