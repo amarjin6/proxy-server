@@ -32,6 +32,10 @@ class Proxy:
         # Track linked sites to proxy
         self.linkedSites = []
 
+        # Store RegEx for  RFC sites
+        self.reg1 = ''
+        self.reg2 = ''
+
     def listen(self):
         while True:
             # Establish the connection
@@ -86,24 +90,31 @@ class Proxy:
         webserver = socket.gethostbyname(webserver)
 
         # Сonvert generic message format of RFC 822
-        buf1 = re.findall(b'\:\d+\/(.*)', request)
-        tmp1 = b''.join(buf1)
-        reg1 = b'/' + tmp1
+        if not self.reg1 and not self.reg2:
+            # Find reg1
+            buf1 = re.findall(b'\:\d+\/(.*)', request)
+            tmp1 = b''.join(buf1)
+            tmp2 = b'/' + tmp1
+            buf1 = re.findall(b'([^ ]+) .*', tmp2)
+            reg1 = b''.join(buf1)
+            print(reg1)
+            self.reg1 = reg1
 
-        buf2 = re.findall(b'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?',
+            # Find reg2
+            buf2 = re.findall(b'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?',
                           request)
-        tmp = []
-        for i in range(len(buf2)):
-            for j in range(len(buf2[i])):
-                tmp.append(buf2[i][j])
+            tmp = []
+            for i in range(len(buf2)):
+                for j in range(len(buf2[i])):
+                    tmp.append(buf2[i][j])
 
-        if tmp:
-            tmp[0] += b'://'
+            if tmp:
+                tmp[0] += b'://'
 
-        reg2 = b''.join(tmp)
+            reg2 = b''.join(tmp)
+            self.reg2 = reg2
 
-        request = request.replace(reg2, reg1)
-        request = request.replace(b'http://live.legendy.by:8000/legendyfm', b'/legendyfm')
+        request = request.replace(self.reg2, self.reg1)
 
         # Set up a new connection to the destination server
         try:
