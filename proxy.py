@@ -119,7 +119,7 @@ class Proxy:
 
             # Check for RFC sites
             if not self.reg1:
-                self.reg1 = self.reg2
+                self.reg2 = self.reg1
 
         request = request.replace(self.reg2, self.reg1)
 
