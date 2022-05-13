@@ -19,7 +19,7 @@ What Bob thinks is the server ( i.e the proxy ) asked for the current time, But 
 
 ## ⚒️**How to Run**⚒️
 * **Clone project to your folder:** `git clone https://github.com/amarjin6/proxy-server.git`
-* **Check for updates and install all necessary [prequirements](https://github.com/amarjin6/proxy-server/blob/master/requirements.txt)**
+* **Check for updates and install all necessary [requirements](https://github.com/amarjin6/proxy-server/blob/master/requirements.txt):** `pip install -r ./requirements.txt`
 * **Run project in terminal:** `python proxy.py`
 * **Don't forget to turn on [PROXY](https://www.ibm.com/docs/sk/odmoc?topic=services-connecting-proxy-server) on your OS**🔌
 
